@@ -5,7 +5,7 @@ import path from 'path';
 import unzipper from 'unzipper';
 
 const zipFile = 'seetup-light.zip';
-const extractFolder = 'seetup';
+const extractFolder = 'seetup-light'; // Direct root folder inside ZIP
 
 async function unzipAndSetup() {
   try {
@@ -21,15 +21,16 @@ async function unzipAndSetup() {
       .promise();
 
     const projectPath = path.join(process.cwd(), extractFolder);
+    const indexCjsPath = path.join(projectPath, 'index.cjs');
+
     console.log(`📁 Changing to ${projectPath}...`);
     process.chdir(projectPath);
 
     console.log(`📥 Installing dependencies...`);
     execSync('npm install', { stdio: 'inherit' });
 
-    const indexCjsPath = path.join(projectPath, 'index.cjs');
     if (fs.existsSync(indexCjsPath)) {
-      console.log(`🚀 Found index.cjs, running it...`);
+      console.log(`🚀 Running index.cjs...`);
       execSync('node index.cjs', { stdio: 'inherit' });
     } else {
       console.error(`❌ index.cjs not found in ${projectPath}`);
