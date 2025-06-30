@@ -1,18 +1,17 @@
-// extract.js
-import fs from 'fs';
-import unzipper from 'unzipper';
-import { exec } from 'child_process';
-import path from 'path';
+// unzip.js
+const fs = require('fs');
+const unzipper = require('unzipper');
+const { exec } = require('child_process');
+const path = require('path');
 
 const zipFilePath = 'seetup-light.zip';
 const extractTo = './seetup-light';
 
-async function extractZip() {
+function extractZip() {
   console.log('📦 Extracting zip...');
-  await fs.createReadStream(zipFilePath)
+  return fs.createReadStream(zipFilePath)
     .pipe(unzipper.Extract({ path: extractTo }))
     .promise();
-  console.log('✅ Zip extracted');
 }
 
 function runCommands() {
@@ -24,11 +23,11 @@ function runCommands() {
     npm run dev
   `;
 
-  console.log('🚀 Starting project...');
-  const child = exec(command, { stdio: 'inherit', shell: true });
+  console.log('🚀 Running build commands...');
+  const child = exec(command, { shell: true });
 
-  child.stdout?.pipe(process.stdout);
-  child.stderr?.pipe(process.stderr);
+  child.stdout.on('data', (data) => process.stdout.write(data));
+  child.stderr.on('data', (data) => process.stderr.write(data));
 
   child.on('exit', (code) => {
     console.log(`⚙️ Process exited with code ${code}`);
@@ -38,6 +37,7 @@ function runCommands() {
 (async () => {
   try {
     await extractZip();
+    console.log('✅ Zip extracted');
     runCommands();
   } catch (err) {
     console.error('❌ Error:', err);
