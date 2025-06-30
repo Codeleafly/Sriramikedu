@@ -17,20 +17,22 @@ async function unzipAndSetup() {
 
     console.log(`📦 Extracting ${zipFile}...`);
     await fs.createReadStream(zipFile)
-      .pipe(unzipper.Extract({ path: extractFolder }))
+      .pipe(unzipper.Extract({ path: '.' }))
       .promise();
 
     const projectPath = path.join(process.cwd(), extractFolder);
     console.log(`📁 Changing to ${projectPath}...`);
     process.chdir(projectPath);
 
-    // Check if index.cjs exists in seetup/
-    const indexCjsPath = path.join(projectPath, 'index.cjs');
+    if (!fs.existsSync("package.json")) {
+      throw new Error("❌ package.json file not found in extracted folder.");
+    }
+
     console.log(`📥 Installing dependencies...`);
     execSync('npm install', { stdio: 'inherit' });
 
-    if (fs.existsSync(indexCjsPath)) {
-      console.log(`🚀 Found index.cjs, starting it directly...`);
+    if (fs.existsSync("index.cjs")) {
+      console.log(`🚀 Found index.cjs, running it with node...`);
       execSync(`node index.cjs`, { stdio: 'inherit' });
       return;
     }
@@ -41,8 +43,6 @@ async function unzipAndSetup() {
     if ('build' in scripts) {
       console.log(`🛠️ Running 'build' script...`);
       execSync('npm run build', { stdio: 'inherit' });
-    } else {
-      console.warn(`⚠️ No 'build' script found. Skipping build step.`);
     }
 
     if ('start' in scripts) {
