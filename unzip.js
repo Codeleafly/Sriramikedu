@@ -1,64 +1,46 @@
-// unzip.js
+// extract.js
 import { execSync } from 'child_process';
+import unzipper from 'unzipper';
 import fs from 'fs';
 import path from 'path';
-import unzipper from 'unzipper';
 
 const zipFile = 'seetup-light.zip';
-const extractFolder = 'seetup';
+const extractTo = 'seetup1';
 
-async function unzipAndSetup() {
+async function unzipProject() {
+  console.log(`🔓 Unzipping ${zipFile}...`);
+
+  await fs
+    .createReadStream(zipFile)
+    .pipe(unzipper.Extract({ path: extractTo }))
+    .promise();
+
+  console.log(`✅ Extracted to ${extractTo}`);
+}
+
+function runCommands() {
+  const projectPath = path.join(extractTo, 'seetup');
+  if (!fs.existsSync(projectPath)) {
+    console.error(`❌ Folder "${projectPath}" not found after unzip.`);
+    process.exit(1);
+  }
+
   try {
-    console.log(`🔍 Checking if ${zipFile} exists...`);
-    if (!fs.existsSync(zipFile)) {
-      console.error(`❌ ZIP file "${zipFile}" not found.`);
-      process.exit(1);
-    }
+    console.log(`📦 Installing dependencies in ${projectPath}...`);
+    execSync(`npm install`, { stdio: 'inherit', cwd: projectPath });
 
-    console.log(`📦 Extracting ${zipFile}...`);
-    await fs.createReadStream(zipFile)
-      .pipe(unzipper.Extract({ path: '.' }))
-      .promise();
+    console.log(`🛠️ Building project...`);
+    execSync(`npm run build`, { stdio: 'inherit', cwd: projectPath });
 
-    const projectPath = path.join(process.cwd(), extractFolder);
-    console.log(`📁 Changing to ${projectPath}...`);
-    process.chdir(projectPath);
-
-    if (!fs.existsSync("package.json")) {
-      throw new Error("❌ package.json file not found in extracted folder.");
-    }
-
-    console.log(`📥 Installing dependencies...`);
-    execSync('npm install', { stdio: 'inherit' });
-
-    if (fs.existsSync("index.cjs")) {
-      console.log(`🚀 Found index.cjs, running it with node...`);
-      execSync(`node index.cjs`, { stdio: 'inherit' });
-      return;
-    }
-
-    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-    const scripts = pkg.scripts || {};
-
-    if ('build' in scripts) {
-      console.log(`🛠️ Running 'build' script...`);
-      execSync('npm run build', { stdio: 'inherit' });
-    }
-
-    if ('start' in scripts) {
-      console.log(`🚀 Running 'start' script...`);
-      execSync('npm run start', { stdio: 'inherit' });
-    } else if ('dev' in scripts) {
-      console.log(`🚧 Running fallback 'dev' script...`);
-      execSync('npm run dev', { stdio: 'inherit' });
-    } else {
-      console.error(`❌ No 'start' or 'dev' script found in package.json.`);
-      process.exit(1);
-    }
+    console.log(`🚀 Starting dev server...`);
+    execSync(`npm run dev`, { stdio: 'inherit', cwd: projectPath });
   } catch (err) {
-    console.error(`❌ Setup failed: ${err.message}`);
+    console.error(`❌ Error during project setup:`, err.message);
     process.exit(1);
   }
 }
 
-unzipAndSetup();
+(async () => {
+  await unzipProject();
+  runCommands();
+})();
