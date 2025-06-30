@@ -1,4 +1,4 @@
-// extract.js
+// unzip.js
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -25,11 +25,21 @@ async function unzipAndSetup() {
   console.log(`📥 Installing dependencies...`);
   execSync('npm install', { stdio: 'inherit' });
 
-  console.log(`🛠️ Building project...`);
-  execSync('npm run build', { stdio: 'inherit' });
+  try {
+    console.log(`🛠️ Building project...`);
+    execSync('npm run build', { stdio: 'inherit' });
 
-  console.log(`🚀 Starting development server...`);
-  execSync('npm run dev', { stdio: 'inherit' });
+    console.log(`🚀 Starting production server...`);
+    execSync('npm run start', { stdio: 'inherit' });
+  } catch (err) {
+    console.warn(`⚠️ Build or Start failed! Trying fallback 'npm run dev'...`);
+    try {
+      execSync('npm run dev', { stdio: 'inherit' });
+    } catch (devErr) {
+      console.error('❌ All start methods failed. Exiting.');
+      process.exit(1);
+    }
+  }
 }
 
 unzipAndSetup().catch(err => {
