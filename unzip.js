@@ -27,26 +27,15 @@ async function unzipAndSetup() {
     console.log(`📥 Installing dependencies...`);
     execSync('npm install', { stdio: 'inherit' });
 
-    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-    const scripts = pkg.scripts || {};
-
-    if ('build' in scripts) {
-      console.log(`🛠️ Running 'build' script...`);
-      execSync('npm run build', { stdio: 'inherit' });
+    const indexCjsPath = path.join(projectPath, 'index.cjs');
+    if (fs.existsSync(indexCjsPath)) {
+      console.log(`🚀 Found index.cjs, running it...`);
+      execSync('node index.cjs', { stdio: 'inherit' });
     } else {
-      console.warn(`⚠️ No 'build' script found. Skipping build step.`);
-    }
-
-    if ('start' in scripts) {
-      console.log(`🚀 Running 'start' script...`);
-      execSync('npm run start', { stdio: 'inherit' });
-    } else if ('dev' in scripts) {
-      console.log(`🚧 Running fallback 'dev' script...`);
-      execSync('npm run dev', { stdio: 'inherit' });
-    } else {
-      console.error(`❌ No 'start' or 'dev' script found in package.json.`);
+      console.error(`❌ index.cjs not found in ${projectPath}`);
       process.exit(1);
     }
+
   } catch (err) {
     console.error(`❌ Setup failed: ${err.message}`);
     process.exit(1);
