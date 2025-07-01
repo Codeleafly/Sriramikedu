@@ -2,8 +2,15 @@
 const fs = require('fs');
 const unzipper = require('unzipper');
 
-fs.createReadStream('cd-seetup.zip')
-  .pipe(unzipper.Extract({ path: './' }))
-  .on('close', () => {
-    console.log('✅ ZIP extracted!');
-  });
+async function extractZip() {
+  console.log("🔄 Extracting ZIP...");
+  await fs.createReadStream('cd-seetup.zip')
+    .pipe(unzipper.Extract({ path: './' }))
+    .promise();
+  console.log("✅ ZIP Extracted!");
+}
+
+extractZip().catch(err => {
+  console.error("❌ Extraction failed:", err);
+  process.exit(1);
+});
